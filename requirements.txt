@@ -3,3 +3,7 @@ pymorphy2
 beautifulsoup4
 lxml
 nltk
+uvicorn
+fastapi
+jinja2
+python-multipart

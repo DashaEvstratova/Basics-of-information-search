@@ -3,9 +3,9 @@ from collections import defaultdict
 
 
 def load_data():
-    with open("inverted_index.json", "r", encoding="utf-8") as f:
+    with open("t_5_search/inverted_index.json", "r", encoding="utf-8") as f:
         inverted_index = json.load(f)
-    with open("idf_dict.json", "r", encoding="utf-8") as f:
+    with open("t_5_search/idf_dict.json", "r", encoding="utf-8") as f:
         idf_dict = json.load(f)
     return inverted_index, idf_dict
 
