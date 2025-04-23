@@ -1,22 +1,23 @@
 from fastapi import FastAPI, Request, Form
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
+import os
 import uvicorn
 
-from t_5_search.searcher import load_data, search
+from t_5_search.searcher import TFIDFVectorSearch
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
-
-inverted_index, idf_dict = load_data()
+searchers = TFIDFVectorSearch(data_dir="output_terms")
+inverted_index = searchers.load_index()
 
 index_map = {}
-with open("demo/index.txt", "r", encoding="utf-8") as f:
+file = os.path.join(os.getcwd(), "index.txt")
+with open(file, "r", encoding="utf-8") as f:
     for line in f:
         filename, url = line.strip().split()
         num = int(filename.replace(".html", ""))
         index_map[num] = url
-
 
 @app.get("/", response_class=HTMLResponse)
 async def read_form(request: Request):
@@ -25,8 +26,18 @@ async def read_form(request: Request):
 
 @app.post("/", response_class=HTMLResponse)
 async def handle_query(request: Request, query: str = Form(...)):
-    results = search(query, inverted_index, idf_dict)
-    top_ids = [doc_id for doc_id, _ in results[:10]]
+    if not query.strip():
+        return templates.TemplateResponse("index.html", {
+            "request": request,
+            "query": query,
+            "results": [],
+            "error": "Пустой запрос. Пожалуйста, введите текст."
+        })
+    searchers.load_data()
+    searchers.save_index()
+    results = searchers.search(query, top_k=10)
+    top_ids = [doc_data["doc_id"] for doc_data in results[:10]]
+
     urls = [index_map.get(doc_id) for doc_id in top_ids if doc_id in index_map]
     return templates.TemplateResponse("index.html", {
         "request": request,
